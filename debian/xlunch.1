@@ -1,0 +1,53 @@
+.TH XLUNCH 1 "August 2025" "xlunch 4.7.6" "User Commands"
+.SH NAME
+xlunch \- graphical application launcher for X
+.SH SYNOPSIS
+.B xlunch
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B xlunch
+is a graphical application launcher for X using pure Xlib and Imlib2.
+It provides a lightweight, mouse- and keyboard-driven interface to launch
+programs, commands, or custom menu entries. Supports UTF-8 for international
+text and offers real-time filtering while typing.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Display help message and exit
+.TP
+.B \-v, \-\-version
+Display version information and exit
+.TP
+.B \-g \fIFILE\fR
+Set background image
+.TP
+.B \-f \fIFONT/SIZE\fR
+Set font and size (e.g., "Arial/12")
+.TP
+.B \-i \fIFILE\fR
+Input file with menu entries
+.TP
+.B \-b \fISIZE\fR
+Border size
+.TP
+.B \-\-iconpadding \fISIZE\fR
+Icon padding
+.TP
+.B \-\-textpadding \fISIZE\fR
+Text padding
+.TP
+.B \-\-outputonly
+Only output selected command, don't execute
+.SH FILES
+.TP
+.I /etc/xlunch/entries.dsv
+System-wide menu entries
+.TP
+.I ~/.xlunch/entries.dsv
+User-specific menu entries
+.SH SEE ALSO
+.BR xlunch_genquick (1)
+.SH AUTHOR
+Tomas Matejicek <www.slax.org>
+.br
+Peter Munch-Ellingsen <www.peterme.net>

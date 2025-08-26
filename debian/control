@@ -1,0 +1,18 @@
+Source: xlunch
+Section: x11
+Priority: optional
+Maintainer: crims0n <crims0n@minios.dev>
+Build-Depends: debhelper-compat (= 12), libimlib2-dev, libx11-dev
+Standards-Version: 4.5.1
+Homepage: https://github.com/Tomas-M/xlunch
+Rules-Requires-Root: no
+
+Package: xlunch
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Graphical application launcher for X using pure Xlib and Imlib2.
+ Provides a lightweight, mouse- and keyboard-driven interface to launch
+ programs, commands, or custom menu entries. Supports UTF-8 for international
+ text and offers real-time filtering while typing. Highly configurable in both
+ appearance and functionality, xlunch can even function as a minimal desktop
+ environment.

@@ -1,0 +1,53 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# Build xlunch executable only, avoid genentries in pbuilder
+	gcc xlunch.c -o xlunch -lImlib2 -lX11 $(CFLAGS)
+	# Create minimal entries.dsv since pbuilder has no desktop files
+	echo "# Generated entries file" > entries.dsv
+
+override_dh_auto_install:
+	# Use debhelper destination directory
+	mkdir -p debian/xlunch/usr/bin/
+	cp xlunch debian/xlunch/usr/bin/
+	# Install improved gentriesquick instead of the original
+	cp debian/gentriesquick debian/xlunch/usr/bin/xlunch_genquick
+	mkdir -p debian/xlunch/usr/share/icons/hicolor/48x48/apps/
+	cp extra/ghost.png debian/xlunch/usr/share/icons/hicolor/48x48/apps/xlunch_ghost.png
+	
+	# Install MiniOS Flux icons and configuration
+	mkdir -p debian/xlunch/usr/share/icons/hicolor/128x128/actions/
+	cp debian/flux/logout.png debian/xlunch/usr/share/icons/hicolor/128x128/actions/logout.png
+	cp debian/flux/restart.png debian/xlunch/usr/share/icons/hicolor/128x128/actions/restart.png
+	cp debian/flux/shutdown.png debian/xlunch/usr/share/icons/hicolor/128x128/actions/shutdown.png
+	
+	mkdir -p debian/xlunch/usr/share/icons/hicolor/128x128/apps/
+	cp debian/flux/chromium-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/chromium-flux.png
+	cp debian/flux/terminal-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/terminal-flux.png
+	cp debian/flux/firefox-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/firefox-flux.png
+	cp debian/flux/installer-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/installer-flux.png
+	cp debian/flux/configurator-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/configurator-flux.png
+	cp debian/flux/calculator-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/calculator-flux.png
+	cp debian/flux/editor-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/editor-flux.png
+	cp debian/flux/videoplayer-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/videoplayer-flux.png
+	cp debian/flux/preferences-system-network-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/preferences-system-network-flux.png
+	cp debian/flux/system-file-manager-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/system-file-manager-flux.png
+	cp debian/flux/utilities-system-monitor-flux.png debian/xlunch/usr/share/icons/hicolor/128x128/apps/utilities-system-monitor-flux.png
+	# xlunch_highlight.png is 188x222, so put it in scalable directory
+	mkdir -p debian/xlunch/usr/share/icons/hicolor/scalable/apps/
+	cp debian/flux/xlunch_highlight.png debian/xlunch/usr/share/icons/hicolor/scalable/apps/xlunch_highlight.png
+	
+	mkdir -p debian/xlunch/etc/xlunch/
+	cp entries.dsv debian/xlunch/etc/xlunch/entries.dsv
+	cp debian/flux/logout.dsv debian/xlunch/etc/xlunch/logout.dsv
+	
+	# Install manual pages
+	mkdir -p debian/xlunch/usr/share/man/man1/
+	cp debian/xlunch.1 debian/xlunch/usr/share/man/man1/xlunch.1
+	cp debian/xlunch_genquick.1 debian/xlunch/usr/share/man/man1/xlunch_genquick.1
+
+override_dh_auto_test:
+	# Skip tests - they require X11 display

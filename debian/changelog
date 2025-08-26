@@ -1,0 +1,26 @@
+xlunch (4.7.6-1) unstable; urgency=medium
+
+  * New xlunch version
+  * Enhance gentriesquick script to include additional icon paths for various
+    categories
+
+ -- crims0n <crims0n@minios.dev>  Tue, 26 Aug 2025 00:49:56 +0300
+
+xlunch (4.7.5-3) unstable; urgency=medium
+
+  * Refactor gentriesquick script to add svg support and elementary-minios icon
+    theme
+
+ -- crims0n <crims0n@minios.dev>  Mon, 16 Jun 2025 01:58:30 +0300
+
+xlunch (4.7.5-2) unstable; urgency=medium
+
+  * Added MiniOS Flux application icons
+
+ -- crims0n <crims0n@minios.dev>  Mon, 15 Apr 2024 19:23:53 +0300
+
+xlunch (4.7.5-1) unstable; urgency=medium
+
+  * Initial release
+
+ -- crims0n <crims0n@minios.dev>  Tue, 08 Aug 2023 17:26:38 +0300

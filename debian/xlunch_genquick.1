@@ -1,0 +1,43 @@
+.TH XLUNCH_GENQUICK 1 "August 2025" "xlunch 4.7.6" "User Commands"
+.SH NAME
+xlunch_genquick \- generate menu entries for xlunch from .desktop files
+.SH SYNOPSIS
+.B xlunch_genquick
+[\fISIZE\fR] [\fB\-\-desktop\fR]
+.SH DESCRIPTION
+.B xlunch_genquick
+scans system .desktop files and generates menu entries in xlunch format.
+It searches for icons in various icon themes and sizes, supporting both
+PNG and SVG formats.
+.SH OPTIONS
+.TP
+.I SIZE
+Preferred icon size (default: 128, 64, 48, 32)
+.TP
+.B \-\-desktop
+Use .desktop file paths as exec commands instead of parsing Exec= field
+.SH ICON SEARCH PATHS
+The script searches for icons in the following directories:
+.IP \(bu 4
+/usr/share/icons/elementary-minios
+.IP \(bu 4
+/usr/share/icons/hicolor
+.IP \(bu 4
+/usr/share/pixmaps
+.IP \(bu 4
+/usr/share/icons/gnome
+.PP
+Icons are searched in multiple categories: apps, actions, devices, mimetypes,
+places, and status.
+.SH OUTPUT FORMAT
+Each line contains: Name;IconPath;Command
+.SH FILES
+.TP
+.I /usr/share/applications/*.desktop
+System application desktop files
+.SH SEE ALSO
+.BR xlunch (1)
+.SH AUTHOR
+Tomas Matejicek <www.slax.org>
+.br
+Enhanced for MiniOS by crims0n <crims0n@minios.dev>

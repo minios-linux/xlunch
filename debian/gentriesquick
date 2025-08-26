@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# icon sizes in priority order: first argument, then 128, 64, 48, 32
+ICONSIZES="$1 128 64 48 32"
+
+# icon theme directories
+ICONPATHS="/usr/share/icons/elementary-minios /usr/share/icons/hicolor /usr/share/pixmaps /usr/share/icons/gnome"
+
+# check for --desktop flag
+if [ "$1" = "--desktop" ] || [ "$2" = "--desktop" ]; then
+   DESKTOPCMD=yes
+else
+   DESKTOPCMD=
+fi
+
+process_directories() {
+   while [ -n "$1" ]; do
+      for desktop in "$1"/*.desktop; do
+
+         Name=
+         Icon=
+         Exec=
+         Hidden=
+         Terminal=
+
+         # read only the needed fields, strip %... placeholders and quote values
+         while read -r LINE; do
+            eval "$LINE"
+         done < <(tac "$desktop" |
+            egrep '^(Name|Icon|Exec|Hidden|Terminal)=' |
+            sed -r "s/ *%.*//" |
+            sed -r "s/=(.*)/='\\1'/")
+
+         # skip hidden entries
+         [ "$Hidden" = "true" ] && continue
+
+         found=
+         for size in $ICONSIZES; do
+            for ICONPATH in $ICONPATHS; do
+
+               # try each extension, SVG first
+               for ext in svg png; do
+                  # old-style size folders
+                  paths=(
+                     "$ICONPATH/${size}x${size}/apps/$Icon.$ext"
+                     "$ICONPATH/apps/${size}x${size}/$Icon.$ext"
+                     # new-style size-as-dir under apps
+                     "$ICONPATH/apps/$size/$Icon.$ext"
+                     # fallback flat apps folder
+                     "$ICONPATH/apps/$Icon.$ext"
+                     # search in other categories
+                     "$ICONPATH/${size}x${size}/actions/$Icon.$ext"
+                     "$ICONPATH/${size}x${size}/devices/$Icon.$ext"
+                     "$ICONPATH/${size}x${size}/mimetypes/$Icon.$ext"
+                     "$ICONPATH/${size}x${size}/places/$Icon.$ext"
+                     "$ICONPATH/${size}x${size}/status/$Icon.$ext"
+                     "$ICONPATH/actions/$size/$Icon.$ext"
+                     "$ICONPATH/devices/$size/$Icon.$ext"
+                     "$ICONPATH/mimetypes/$size/$Icon.$ext"
+                     "$ICONPATH/places/$size/$Icon.$ext"
+                     "$ICONPATH/status/$size/$Icon.$ext"
+                     # flat category folders
+                     "$ICONPATH/actions/$Icon.$ext"
+                     "$ICONPATH/devices/$Icon.$ext"
+                     "$ICONPATH/mimetypes/$Icon.$ext"
+                     "$ICONPATH/places/$Icon.$ext"
+                     "$ICONPATH/status/$Icon.$ext"
+                  )
+                  for variant in "${paths[@]}"; do
+                     if [ -f "$variant" ]; then
+                        Icon="$variant"
+                        found=1
+                        break 4
+                     fi
+                  done
+               done
+
+            done
+         done
+
+         # if --desktop was passed, use the .desktop path as the Exec command
+         [ -n "$DESKTOPCMD" ] && Exec="$desktop"
+
+         # output only if an icon was found
+         [ -n "$found" ] && echo "$Name;$Icon;$Exec"
+
+      done
+      shift
+   done
+}
+
+# process the system .desktop directory
+process_directories /usr/share/applications
