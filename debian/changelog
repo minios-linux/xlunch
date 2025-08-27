@@ -1,3 +1,10 @@
+xlunch (4.7.6-2) unstable; urgency=medium
+
+  * Add SVG support check and conversion in gentriesquick script
+  * Refactor icon installation paths and clean up whitespace in debian/rules
+
+ -- crims0n <crims0n@minios.dev>  Wed, 27 Aug 2025 01:23:20 +0300
+
 xlunch (4.7.6-1) unstable; urgency=medium
 
   * New xlunch version

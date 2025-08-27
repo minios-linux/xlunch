@@ -6,6 +6,82 @@ ICONSIZES="$1 128 64 48 32"
 # icon theme directories
 ICONPATHS="/usr/share/icons/elementary-minios /usr/share/icons/hicolor /usr/share/pixmaps /usr/share/icons/gnome"
 
+# check if imlib2 supports SVG (return 0 if supported, 1 if not)
+check_imlib2_svg_support() {
+   # check for SVG loader in imlib2 loaders directory
+   local arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
+   local lib_path
+   
+   case "$arch" in
+      amd64|x86_64)
+         lib_path="/usr/lib/x86_64-linux-gnu/imlib2/loaders/svg.so"
+         ;;
+      i386|i686)
+         lib_path="/usr/lib/i386-linux-gnu/imlib2/loaders/svg.so"
+         ;;
+      arm64|aarch64)
+         lib_path="/usr/lib/aarch64-linux-gnu/imlib2/loaders/svg.so"
+         ;;
+      armhf)
+         lib_path="/usr/lib/arm-linux-gnueabihf/imlib2/loaders/svg.so"
+         ;;
+      *)
+         # fallback: try to find svg.so in any imlib2 loaders directory
+         lib_path=$(find /usr/lib -name "svg.so" -path "*/imlib2/loaders/*" 2>/dev/null | head -1)
+         ;;
+   esac
+   
+   [ -f "$lib_path" ] && return 0
+   return 1  # SVG loader not found
+}
+
+# convert SVG to PNG if needed
+convert_svg_if_needed() {
+   local svg_path="$1"
+   local size="$2"
+   
+   # check if rsvg-convert is available
+   if ! command -v rsvg-convert >/dev/null 2>&1; then
+      return 1  # no converter available
+   fi
+   
+   # extract category from original SVG path
+   local category="apps"  # default
+   if [[ "$svg_path" =~ /([^/]+)/[^/]*\.svg$ ]]; then
+      category="${BASH_REMATCH[1]}"
+   fi
+   
+   # determine target directory based on user and preserve category
+   if [ "$(id -u)" -eq 0 ]; then
+      local target_dir="/usr/share/icons/hicolor/${size}x${size}/${category}"
+   else
+      local target_dir="$HOME/.local/share/icons/hicolor/${size}x${size}/${category}"
+   fi
+   
+   local basename=$(basename "$svg_path" .svg)
+   local png_path="${target_dir}/${basename}.png"
+   
+   # convert only if PNG doesn't exist
+   if [ ! -f "$png_path" ]; then
+      # create directory if it doesn't exist
+      mkdir -p "$target_dir" 2>/dev/null
+      rsvg-convert -w "$size" -h "$size" "$svg_path" -o "$png_path" 2>/dev/null
+   fi
+   
+   if [ -f "$png_path" ]; then
+      echo "$png_path"
+      return 0
+   fi
+   return 1
+}
+
+# check if imlib2 supports SVG
+if check_imlib2_svg_support; then
+   SVG_SUPPORTED=yes
+else
+   SVG_SUPPORTED=
+fi
+
 # check for --desktop flag
 if [ "$1" = "--desktop" ] || [ "$2" = "--desktop" ]; then
    DESKTOPCMD=yes
@@ -68,7 +144,17 @@ process_directories() {
                   )
                   for variant in "${paths[@]}"; do
                      if [ -f "$variant" ]; then
-                        Icon="$variant"
+                        # if it's an SVG and imlib2 doesn't support SVG, try to convert
+                        if [[ "$variant" == *.svg ]] && [ -z "$SVG_SUPPORTED" ]; then
+                           converted=$(convert_svg_if_needed "$variant" "$size")
+                           if [ $? -eq 0 ] && [ -n "$converted" ]; then
+                              Icon="$converted"
+                           else
+                              Icon="$variant"  # fallback to original SVG
+                           fi
+                        else
+                           Icon="$variant"
+                        fi
                         found=1
                         break 4
                      fi
