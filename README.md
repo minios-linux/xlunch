@@ -17,7 +17,7 @@ make all
 
 This will:
 1. Check build dependencies and install if missing
-2. Clone the upstream xlunch repository (v4.7.6)
+2. Clone the pinned upstream xlunch snapshot
 3. Create the orig tarball
 4. Add our debian packaging
 5. Build the .deb package
@@ -51,4 +51,4 @@ The workflow is triggered on:
 The upstream xlunch project is maintained at:
 https://github.com/Tomas-M/xlunch
 
-Current version: 4.7.6
+Current source: 4.7.6+git20260524.da1ff9f

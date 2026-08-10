@@ -5,7 +5,7 @@
 
 override_dh_auto_build:
 	# Build xlunch executable only, avoid genentries in pbuilder
-	gcc xlunch.c -o xlunch -lImlib2 -lX11 $(CFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) xlunch.c -o xlunch $(LDFLAGS) -lImlib2 -lX11
 	# Create minimal entries.dsv since pbuilder has no desktop files
 	echo "# Generated entries file" > entries.dsv
 
@@ -48,4 +48,7 @@ override_dh_auto_install:
 	cp debian/xlunch_genquick.1 debian/xlunch/usr/share/man/man1/xlunch_genquick.1
 
 override_dh_auto_test:
-	# Skip tests - they require X11 display
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	./xlunch --help 2>&1 | grep -F -- "--nostdin"
+	./xlunch --version 2>&1 | grep -F "xlunch graphical program launcher, version 4.7.6"
+endif

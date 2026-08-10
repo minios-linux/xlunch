@@ -50,9 +50,10 @@ jobs:
         env:
           PACKAGE: ${{ steps.package_info.outputs.name }}
           VERSION: ${{ steps.package_info.outputs.version }}
+          UPSTREAM_REF: da1ff9fdc85e565370ed3fa7639a855f3cdbd509
         run: |
           docker run --rm --privileged \
-            -e PACKAGE -e VERSION \
+            -e PACKAGE -e VERSION -e UPSTREAM_REF \
             --platform ${{ matrix.platform }} \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
@@ -70,11 +71,13 @@ jobs:
 
               echo "##[group]2. Clone Upstream Source"
               mkdir -p build
-              git clone --branch v${VERSION} https://github.com/Tomas-M/xlunch.git build/${PACKAGE}-${VERSION}
+              git clone https://github.com/Tomas-M/xlunch.git build/${PACKAGE}-${VERSION}
+              git -C build/${PACKAGE}-${VERSION} checkout --detach "${UPSTREAM_REF}"
+              test "$(git -C build/${PACKAGE}-${VERSION} rev-parse HEAD)" = "${UPSTREAM_REF}"
               echo "##[endgroup]"
 
               echo "##[group]3. Create .orig.tar.gz"
-              tar -C build --create --gzip --file build/${PACKAGE}_${VERSION}.orig.tar.gz ${PACKAGE}-${VERSION}
+              tar --exclude=.git -C build --create --gzip --file build/${PACKAGE}_${VERSION}.orig.tar.gz ${PACKAGE}-${VERSION}
               echo "##[endgroup]"
 
               echo "##[group]4. Add debian/ Directory"

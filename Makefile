@@ -1,22 +1,24 @@
 .PHONY: all clone orig add-debian check-deps build-package lintian clean
 
 PACKAGE   := xlunch
-VERSION   := 4.7.6
-TAG       := v$(VERSION)
+VERSION   := 4.7.6+git20260524.da1ff9f
+UPSTREAM_REF := da1ff9fdc85e565370ed3fa7639a855f3cdbd509
 REPO      := https://github.com/Tomas-M/xlunch.git
 BUILD_DIR := build/$(PACKAGE)-$(VERSION)
 
 all: check-deps build-package lintian
 
 clone:
-	@echo "Cloning $(PACKAGE) $(VERSION)..."
+	@echo "Cloning $(PACKAGE) at $(UPSTREAM_REF)..."
 	@mkdir -p build
 	@rm -rf $(BUILD_DIR)
-	@git clone --branch $(TAG) $(REPO) $(BUILD_DIR)
+	@git clone $(REPO) $(BUILD_DIR)
+	@git -C $(BUILD_DIR) checkout --detach $(UPSTREAM_REF)
+	@test "$$(git -C $(BUILD_DIR) rev-parse HEAD)" = "$(UPSTREAM_REF)"
 
 orig: clone
 	@echo "Creating orig tarball..."
-	@tar czf build/$(PACKAGE)_$(VERSION).orig.tar.gz -C build $(PACKAGE)-$(VERSION)
+	@tar --exclude=.git -czf build/$(PACKAGE)_$(VERSION).orig.tar.gz -C build $(PACKAGE)-$(VERSION)
 
 add-debian: orig
 	@echo "Adding debian directory..."
