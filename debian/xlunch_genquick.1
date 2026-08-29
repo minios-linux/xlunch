@@ -6,7 +6,7 @@ xlunch_genquick \- generate menu entries for xlunch from .desktop files
 [\fISIZE\fR] [\fB\-\-desktop\fR]
 .SH DESCRIPTION
 .B xlunch_genquick
-scans system .desktop files and generates menu entries in xlunch format.
+scans user and system .desktop files and generates menu entries in xlunch format.
 It searches for icons in various icon themes and sizes, supporting both
 PNG and SVG formats.
 .SH OPTIONS
@@ -32,6 +32,10 @@ places, and status.
 .SH OUTPUT FORMAT
 Each line contains: Name;IconPath;Command
 .SH FILES
+.TP
+.I $XDG_DATA_HOME/applications/*.desktop
+User application desktop files. If XDG_DATA_HOME is unset,
+$HOME/.local/share/applications is used.
 .TP
 .I /usr/share/applications/*.desktop
 System application desktop files

@@ -1,3 +1,12 @@
+xlunch (4.7.6+git20260524.da1ff9f-1minios2) unstable; urgency=medium
+
+  * Generate entries from user and system XDG application directories, with
+    user desktop files taking precedence over matching system entries.
+  * Ignore unavailable application directories and empty desktop-file globs.
+  * Document user application-file discovery in xlunch_genquick(1).
+
+ -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 12:00:00 +0300
+
 xlunch (4.7.6+git20260524.da1ff9f-1minios1) unstable; urgency=medium
 
   * Package upstream snapshot da1ff9f with the new --nostdin option.

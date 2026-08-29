@@ -89,9 +89,21 @@ else
    DESKTOPCMD=
 fi
 
+declare -A SEEN_DESKTOPS
+
 process_directories() {
    while [ -n "$1" ]; do
+      if [ ! -d "$1" ]; then
+         shift
+         continue
+      fi
+
       for desktop in "$1"/*.desktop; do
+         [ -f "$desktop" ] || continue
+
+         desktop_id="${desktop##*/}"
+         [ -n "${SEEN_DESKTOPS[$desktop_id]+x}" ] && continue
+         SEEN_DESKTOPS[$desktop_id]=1
 
          Name=
          Icon=
@@ -175,5 +187,11 @@ process_directories() {
    done
 }
 
-# process the system .desktop directory
-process_directories /usr/share/applications
+# Follow XDG precedence: user entries override matching system entries.
+APPLICATION_DIRS=("${XDG_DATA_HOME:-$HOME/.local/share}/applications")
+IFS=: read -r -a SYSTEM_DATA_DIRS <<< "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+for data_dir in "${SYSTEM_DATA_DIRS[@]}"; do
+   APPLICATION_DIRS+=("$data_dir/applications")
+done
+
+process_directories "${APPLICATION_DIRS[@]}"
