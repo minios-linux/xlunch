@@ -1,0 +1,222 @@
+Description: wrap long launcher titles onto a second line
+ Long titles shown below icons are wrapped at word boundaries instead of
+ being truncated immediately. UTF-8 boundaries are preserved, and only the
+ second line is ellipsized when two lines are still not enough.
+Author: MiniOS Linux <support@minios.dev>
+Forwarded: no
+Last-Update: 2026-09-01
+
+diff --git a/xlunch.c b/xlunch.c
+index e946156..d11c11b 100644
+--- a/xlunch.c
++++ b/xlunch.c
+@@ -300,6 +300,7 @@ void calculate_percentage(int maxvalue, percentable_t* percentable)
+ void recalc_cells()
+ {
+     int margined_cell_width, margined_cell_height;
++    int title_block_height = font_height > 0 ? font_height * 2 + 2 : 0;
+ 
+     if (text_after){
+         cell_width=icon_size+icon_padding*2;
+@@ -310,9 +311,9 @@ void recalc_cells()
+             ucolumns = 1;
+     } else {
+         cell_width=icon_size+icon_padding*2;
+-        cell_height=icon_size+icon_v_padding*2+font_height+text_padding;
++        cell_height=icon_size+icon_v_padding*2+title_block_height+text_padding;
+         margined_cell_width=icon_size+icon_padding*2+least_margin;
+-        margined_cell_height=icon_size+icon_v_padding*2+font_height+text_padding+least_v_margin;
++        margined_cell_height=icon_size+icon_v_padding*2+title_block_height+text_padding+least_v_margin;
+     }
+ 
+     border = screen_width/10;
+@@ -431,6 +432,130 @@ char* strncpyutf8(char* dst, const char* src, size_t num)
+     return dst;
+ }
+ 
++static int title_text_width(const char *text)
++{
++    int width, height;
++    imlib_get_text_size(text, &width, &height);
++    return width;
++}
++
++static size_t fit_title_prefix(char *dst, size_t dst_size, const char *src, int max_width)
++{
++    size_t bytes;
++
++    if (dst_size == 0 || max_width <= 0) return 0;
++
++    bytes = strlen(src);
++    if (bytes >= dst_size) bytes = dst_size - 1;
++
++    while (bytes > 0) {
++        strncpyutf8(dst, src, bytes);
++        bytes = strlen(dst);
++        if (title_text_width(dst) <= max_width) return bytes;
++        bytes--;
++    }
++
++    dst[0] = '\0';
++    return 0;
++}
++
++static void ellipsize_title(char *dst, size_t dst_size, const char *src, int max_width)
++{
++    const char *ellipsis = "..";
++    const size_t ellipsis_len = 2;
++    size_t bytes;
++
++    if (dst_size == 0) return;
++    dst[0] = '\0';
++    if (max_width <= 0 || *src == '\0') return;
++
++    if (strlen(src) < dst_size) {
++        strcpy(dst, src);
++        if (title_text_width(dst) <= max_width) return;
++    }
++
++    if (dst_size <= ellipsis_len + 1 || title_text_width(ellipsis) > max_width) return;
++
++    bytes = strlen(src);
++    if (bytes > dst_size - ellipsis_len - 1) bytes = dst_size - ellipsis_len - 1;
++
++    while (bytes > 0) {
++        strncpyutf8(dst, src, bytes);
++        bytes = strlen(dst);
++        strcat(dst, ellipsis);
++        if (title_text_width(dst) <= max_width) return;
++        if (bytes == 0) break;
++        bytes--;
++    }
++
++    strcpy(dst, ellipsis);
++}
++
++static void wrap_title(const char *src, char *line1, char *line2,
++                       size_t line_size, int max_width)
++{
++    const char *best_rest = NULL;
++    const char *fallback_rest = NULL;
++    size_t best_prefix_len = 0;
++    size_t fallback_prefix_len = 0;
++    const char *p;
++    char candidate[256];
++
++    if (line_size == 0) return;
++    line1[0] = '\0';
++    line2[0] = '\0';
++    if (max_width <= 0 || *src == '\0') return;
++
++    if (strlen(src) < line_size) {
++        strcpy(line1, src);
++        if (title_text_width(line1) <= max_width) return;
++    }
++
++    for (p = src; *p != '\0'; p++) {
++        size_t prefix_len;
++        const char *rest;
++
++        if (*p != ' ') continue;
++        prefix_len = p - src;
++        while (prefix_len > 0 && src[prefix_len - 1] == ' ') prefix_len--;
++        rest = p + 1;
++        while (*rest == ' ') rest++;
++        if (prefix_len == 0 || *rest == '\0') continue;
++
++        strncpyutf8(candidate, src, prefix_len);
++        if (title_text_width(candidate) > max_width) continue;
++
++        fallback_prefix_len = prefix_len;
++        fallback_rest = rest;
++        if (title_text_width(rest) <= max_width) {
++            best_prefix_len = prefix_len;
++            best_rest = rest;
++        }
++    }
++
++    if (best_rest != NULL) {
++        strncpyutf8(line1, src, best_prefix_len);
++        strncpyutf8(line2, best_rest, line_size - 1);
++        return;
++    }
++
++    if (fallback_rest != NULL) {
++        strncpyutf8(line1, src, fallback_prefix_len);
++        ellipsize_title(line2, line_size, fallback_rest, max_width);
++        return;
++    }
++
++    size_t prefix_len = fit_title_prefix(line1, line_size, src, max_width);
++    if (prefix_len == 0) {
++        ellipsize_title(line1, line_size, src, max_width);
++        return;
++    }
++
++    const char *rest = src + prefix_len;
++    while (*rest == ' ') rest++;
++    ellipsize_title(line2, line_size, rest, max_width);
++}
++
+ 
+ void arrange_positions()
+ {
+@@ -2405,29 +2530,39 @@ void renderEntry(Imlib_Image buffer, char title[256], node_t * current, Cursor *
+     if (font && !no_title)
+     {
+         imlib_context_set_image(buffer);
+-        int text_w;
+-        int text_h;
+-
+-        const size_t osz = strlen(current->title);
+-        size_t sz = osz;
+         imlib_context_set_font(font);
+-        do
+-        {
+-            strncpyutf8(title,current->title,sz);
+-            if(sz != osz)
+-                strcat(title,"..");
+-            imlib_get_text_size(title, &text_w, &text_h);
+-            sz--;
+-        } while(text_w > cell_width-(text_after ? (icon_size != 0 ? icon_padding*2 : icon_padding) + icon_size + text_padding : 2*text_padding) && sz>0);
+-
+-        int d;
+-        if (current->clicked==1) d=4;
+-        else d=0;
+ 
+         if (text_after) {
+-            draw_text_with_shadow(current->x - up_x + (text_other_side ? text_padding : (icon_size != 0 ? (padding_swap ? icon_padding*2 : icon_padding + text_padding) : icon_padding) + icon_size), current->y - up_y + cell_height/2 - font_height/2, title, text_color);
++            int max_text_width = cell_width -
++                ((icon_size != 0 ? icon_padding * 2 : icon_padding) + icon_size + text_padding);
++            ellipsize_title(title, 256, current->title, max_text_width);
++            draw_text_with_shadow(
++                current->x - up_x +
++                    (text_other_side ? text_padding :
++                     (icon_size != 0 ?
++                      (padding_swap ? icon_padding * 2 : icon_padding + text_padding) :
++                      icon_padding) + icon_size),
++                current->y - up_y + cell_height / 2 - font_height / 2,
++                title, text_color);
+         } else {
+-            draw_text_with_shadow(current->x - up_x + cell_width/2 - text_w/2, current->y - up_y + (text_other_side ? text_padding : (padding_swap ? icon_v_padding*2 : icon_v_padding + text_padding) + icon_size), title, text_color);
++            char second_title[256];
++            int max_text_width = cell_width - 2 * text_padding;
++            int text_y = current->y - up_y +
++                (text_other_side ? text_padding :
++                 (padding_swap ? icon_v_padding * 2 : icon_v_padding + text_padding) + icon_size);
++
++            wrap_title(current->title, title, second_title, 256, max_text_width);
++
++            if (title[0] != '\0') {
++                int text_w = title_text_width(title);
++                draw_text_with_shadow(current->x - up_x + cell_width / 2 - text_w / 2,
++                                      text_y, title, text_color);
++            }
++            if (second_title[0] != '\0') {
++                int text_w = title_text_width(second_title);
++                draw_text_with_shadow(current->x - up_x + cell_width / 2 - text_w / 2,
++                                      text_y + font_height + 2, second_title, text_color);
++            }
+         }
+ 
+         /* free the font */

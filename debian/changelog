@@ -1,3 +1,11 @@
+xlunch (4.7.6+git20260524.da1ff9f-1minios3) unstable; urgency=medium
+
+  * Wrap long application titles below icons onto a second centered line.
+  * Prefer word boundaries, preserve UTF-8 characters, and ellipsize only when
+    the title still does not fit into two lines.
+
+ -- crims0n <crims0n@minios.dev>  Wed, 02 Sep 2026 00:19:09 +0300
+
 xlunch (4.7.6+git20260524.da1ff9f-1minios2) unstable; urgency=medium
 
   * Generate entries from user and system XDG application directories, with
