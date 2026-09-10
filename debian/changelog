@@ -1,3 +1,9 @@
+xlunch (4.7.6+git20260524.da1ff9f-1minios4) unstable; urgency=medium
+
+  * Add category icon paths to gentriesquick script
+
+ -- crims0n <crims0n@minios.dev>  Thu, 10 Sep 2026 16:16:47 +0300
+
 xlunch (4.7.6+git20260524.da1ff9f-1minios3) unstable; urgency=medium
 
   * Wrap long application titles below icons onto a second centered line.

@@ -9,6 +9,10 @@ xlunch_genquick \- generate menu entries for xlunch from .desktop files
 scans user and system .desktop files and generates menu entries in xlunch format.
 It searches for icons in various icon themes and sizes, supporting both
 PNG and SVG formats.
+.PP
+Entries marked Hidden=true or NoDisplay=true are excluded from the menu.
+Only the main Desktop Entry group is read; desktop action groups do not
+replace the application's launch fields.
 .SH OPTIONS
 .TP
 .I SIZE
